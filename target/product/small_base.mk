@@ -15,32 +15,24 @@
 #
 
 # This is a build configuration for a full-featured build of the
-# Open-Source part of the tree. It's geared toward a US-centric
-# build of the emulator, but all those aspects can be overridden
-# in inherited configurations.
+# Open-Source part of the tree. This is a base configuration to
+# bes used for AOSP builds on various target devices.
 
 PRODUCT_PACKAGES := \
-    drmserver \
-    libdrmframework \
-    libdrmframework_jni \
-    libfwdlockengine \
-    WAPPushManager
+    VoiceDialer
 
 # Additional settings used in all AOSP builds
 PRODUCT_PROPERTY_OVERRIDES := \
-    ro.com.android.dateformat=MM-dd-yyyy
+    keyguard.no_require_sim=true
 
-# Put en_US first in the list, so make it default.
+# Put en_US first in the list, to make it default.
 PRODUCT_LOCALES := en_US
 
-# Get some sounds
-$(call inherit-product-if-exists, frameworks/base/data/sounds/AllAudio.mk)
+# Pick up some sounds - stick with the short list to save space
+# on smaller devices.
+$(call inherit-product-if-exists, frameworks/base/data/sounds/OriginalAudio.mk)
 
-# Get the TTS language packs
-$(call inherit-product-if-exists, external/svox/pico/lang/all_pico_languages.mk)
+# Get the list of languages.
+$(call inherit-product, $(SRC_TARGET_DIR)/product/languages_small.mk)
 
-# Get a list of languages.
-$(call inherit-product, $(SRC_TARGET_DIR)/product/locales_full.mk)
-
-# Get everything else from the parent package
-$(call inherit-product, $(SRC_TARGET_DIR)/product/generic_no_telephony.mk)
+$(call inherit-product, $(SRC_TARGET_DIR)/product/generic.mk)
