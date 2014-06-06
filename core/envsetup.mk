@@ -33,7 +33,7 @@ endif
 
 # ---------------------------------------------------------------
 # Set up configuration for host machine.  We don't do cross-
-# compiles except for arm, so the HOST is whatever we are
+# compiles except for arm/mips, so the HOST is whatever we are
 # running on
 
 UNAME := $(shell uname -sm)
@@ -55,12 +55,10 @@ endif
 # BUILD_OS is the real host doing the build.
 BUILD_OS := $(HOST_OS)
 
-# Under Linux, if USE_MINGW is set, we change HOST_OS to Windows to build the
+# If USE_MINGW is set, we change HOST_OS to Windows to build the
 # Windows SDK. Only a subset of tools and SDK will manage to build properly.
-ifeq ($(HOST_OS),linux)
 ifneq ($(USE_MINGW),)
 	HOST_OS := windows
-endif
 endif
 
 ifeq ($(HOST_OS),)
@@ -94,28 +92,12 @@ $(error HOST_BUILD_TYPE must be either release or debug, not '$(HOST_BUILD_TYPE)
 endif
 endif
 
-# Get whether the host is running a 32-bit or a 64-bit OS
-HOST_BITS := $(strip $(shell getconf LONG_BIT))
-ifneq ($(HOST_BITS),32)
-ifneq ($(HOST_BITS),64)
-HOST_BITS :=
-endif
-endif
-
 # This is the standard way to name a directory containing prebuilt host
 # objects. E.g., prebuilt/$(HOST_PREBUILT_TAG)/cc
 ifeq ($(HOST_OS),windows)
   HOST_PREBUILT_TAG := windows
 else
   HOST_PREBUILT_TAG := $(HOST_OS)-$(HOST_ARCH)
-endif
-
-# If $(HOST_BITS) could be determined $(HOST_PREBUILT_EXTRA_TAG) contains
-# this as well and should be checked for a prebuilt first
-ifeq ($(strip $(HOST_BITS)),)
-  HOST_PREBUILT_EXTRA_TAG := $(HOST_PREBUILT_TAG)
-else
-  HOST_PREBUILT_EXTRA_TAG := $(HOST_PREBUILT_TAG)-$(HOST_BITS)
 endif
 
 # TARGET_COPY_OUT_* are all relative to the staging directory, ie PRODUCT_OUT.
@@ -130,23 +112,20 @@ TARGET_COPY_OUT_RECOVERY := recovery
 # variables that we need in order to locate the output files.
 include $(BUILD_SYSTEM)/product_config.mk
 
-build_variant := $(filter-out eng user userdebug tests,$(TARGET_BUILD_VARIANT))
+build_variant := $(filter-out eng user userdebug,$(TARGET_BUILD_VARIANT))
 ifneq ($(build_variant)-$(words $(TARGET_BUILD_VARIANT)),-1)
 $(warning bad TARGET_BUILD_VARIANT: $(TARGET_BUILD_VARIANT))
-$(error must be empty or one of: eng user userdebug tests)
+$(error must be empty or one of: eng user userdebug)
 endif
 
 # ---------------------------------------------------------------
 # Set up configuration for target machine.
 # The following must be set:
 # 		TARGET_OS = { linux }
-# 		TARGET_ARCH = { arm | x86 }
+# 		TARGET_ARCH = { arm | x86 | mips }
 
-
-ifeq ($(TARGET_ARCH),)
-TARGET_ARCH := arm
-endif
 TARGET_OS := linux
+# TARGET_ARCH should be set by BoardConfig.mk and will be checked later
 
 # the target build type defaults to release
 ifneq ($(TARGET_BUILD_TYPE),debug)
@@ -158,7 +137,11 @@ endif
 
 ifeq (,$(strip $(OUT_DIR)))
 ifeq (,$(strip $(OUT_DIR_COMMON_BASE)))
+ifneq ($(TOPDIR),)
 OUT_DIR := $(TOPDIR)out
+else
+OUT_DIR := $(CURDIR)/out
+endif
 else
 OUT_DIR := $(OUT_DIR_COMMON_BASE)/$(notdir $(PWD))
 endif
@@ -201,7 +184,6 @@ HOST_OUT_SDK_ADDON := $(HOST_OUT)/sdk_addon
 HOST_OUT_INTERMEDIATES := $(HOST_OUT)/obj
 HOST_OUT_HEADERS:= $(HOST_OUT_INTERMEDIATES)/include
 HOST_OUT_INTERMEDIATE_LIBRARIES := $(HOST_OUT_INTERMEDIATES)/lib
-HOST_OUT_STATIC_LIBRARIES := $(HOST_OUT_INTERMEDIATE_LIBRARIES)
 HOST_OUT_NOTICE_FILES:=$(HOST_OUT_INTERMEDIATES)/NOTICE_FILES
 HOST_OUT_COMMON_INTERMEDIATES := $(HOST_COMMON_OUT_ROOT)/obj
 
@@ -216,23 +198,23 @@ TARGET_OUT_OPTIONAL_EXECUTABLES:= $(TARGET_OUT)/xbin
 TARGET_OUT_SHARED_LIBRARIES:= $(TARGET_OUT)/lib
 TARGET_OUT_JAVA_LIBRARIES:= $(TARGET_OUT)/framework
 TARGET_OUT_APPS:= $(TARGET_OUT)/app
+TARGET_OUT_APPS_PRIVILEGED := $(TARGET_OUT)/priv-app
 TARGET_OUT_KEYLAYOUT := $(TARGET_OUT)/usr/keylayout
 TARGET_OUT_KEYCHARS := $(TARGET_OUT)/usr/keychars
 TARGET_OUT_ETC := $(TARGET_OUT)/etc
-TARGET_OUT_STATIC_LIBRARIES:= $(TARGET_OUT_INTERMEDIATES)/lib
 TARGET_OUT_NOTICE_FILES:=$(TARGET_OUT_INTERMEDIATES)/NOTICE_FILES
 TARGET_OUT_FAKE := $(PRODUCT_OUT)/fake_packages
 
 TARGET_OUT_DATA := $(PRODUCT_OUT)/$(TARGET_COPY_OUT_DATA)
 TARGET_OUT_DATA_EXECUTABLES:= $(TARGET_OUT_EXECUTABLES)
 TARGET_OUT_DATA_SHARED_LIBRARIES:= $(TARGET_OUT_SHARED_LIBRARIES)
-TARGET_OUT_DATA_JAVA_LIBRARIES:= $(TARGET_OUT_JAVA_LIBRARIES)
+TARGET_OUT_DATA_JAVA_LIBRARIES:= $(TARGET_OUT_DATA)/framework
 TARGET_OUT_DATA_APPS:= $(TARGET_OUT_DATA)/app
 TARGET_OUT_DATA_KEYLAYOUT := $(TARGET_OUT_KEYLAYOUT)
 TARGET_OUT_DATA_KEYCHARS := $(TARGET_OUT_KEYCHARS)
 TARGET_OUT_DATA_ETC := $(TARGET_OUT_ETC)
-TARGET_OUT_DATA_STATIC_LIBRARIES:= $(TARGET_OUT_STATIC_LIBRARIES)
 TARGET_OUT_DATA_NATIVE_TESTS := $(TARGET_OUT_DATA)/nativetest
+TARGET_OUT_DATA_FAKE := $(TARGET_OUT_DATA)/fake_packages
 
 TARGET_OUT_CACHE := $(PRODUCT_OUT)/cache
 

@@ -23,22 +23,30 @@ TOOLS_PREFIX := #prebuilt/windows/host/bin/
 TOOLS_EXE_SUFFIX := .exe
 
 # Settings to use MinGW has a cross-compiler under Linux
-ifneq ($(findstring Linux,$(UNAME)),)
 ifneq ($(strip $(USE_MINGW)),)
 HOST_ACP_UNAVAILABLE := true
 TOOLS_EXE_SUFFIX :=
 HOST_GLOBAL_CFLAGS += -DUSE_MINGW
 ifneq ($(strip $(BUILD_HOST_64bit)),)
+ifeq ($(BUILD_OS),darwin)
+$(error Windows amd64 cross compile builds not supported from Darwin)
+else
 TOOLS_PREFIX := /usr/bin/amd64-mingw32msvc-
 HOST_C_INCLUDES += /usr/lib/gcc/amd64-mingw32msvc/4.4.2/include
 HOST_GLOBAL_LD_DIRS += -L/usr/amd64-mingw32msvc/lib
+endif
+else
+ifeq ($(BUILD_OS),darwin)
+TOOLS_PREFIX := /usr/local/gcc-4.8.0-qt-4.8.4-for-mingw32/win32-gcc/bin//i586-mingw32-
+HOST_C_INCLUDES += /usr/local/gcc-4.8.0-qt-4.8.4-for-mingw32/win32-gcc/i586-mingw32/include /usr/local/gcc-4.8.0-qt-4.8.4-for-mingw32/win32-gcc/i586-mingw32/include/ddk
+HOST_GLOBAL_LD_DIRS += -L/usr/local/gcc-4.8.0-qt-4.8.4-for-mingw32/win32-gcc/i586-mingw32/lib
 else
 TOOLS_PREFIX := /usr/bin/i586-mingw32msvc-
 HOST_C_INCLUDES += /usr/lib/gcc/i586-mingw32msvc/3.4.4/include
 HOST_GLOBAL_LD_DIRS += -L/usr/i586-mingw32msvc/lib
+endif
 endif # BUILD_HOST_64bit
 endif # USE_MINGW
-endif # Linux
 
 HOST_CC := $(TOOLS_PREFIX)gcc$(TOOLS_EXE_SUFFIX)
 HOST_CXX := $(TOOLS_PREFIX)g++$(TOOLS_EXE_SUFFIX)
@@ -46,6 +54,10 @@ HOST_AR := $(TOOLS_PREFIX)ar$(TOOLS_EXE_SUFFIX)
 
 HOST_GLOBAL_CFLAGS += -include $(call select-android-config-h,windows)
 HOST_GLOBAL_LDFLAGS += --enable-stdcall-fixup
+ifneq ($(strip $(BUILD_HOST_static)),)
+# Statically-linked binaries are desirable for sandboxed environment
+HOST_GLOBAL_LDFLAGS += -static
+endif # BUILD_HOST_static
 
 # when building under Cygwin, ensure that we use Mingw compilation by default.
 # you can disable this (i.e. to generate Cygwin executables) by defining the

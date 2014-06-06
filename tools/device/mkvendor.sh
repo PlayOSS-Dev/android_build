@@ -56,7 +56,7 @@ then
     echo Output will be in $DEVICE_DIR
     mkdir -p $DEVICE_DIR
 
-    TMPDIR=/tmp/bootimg
+    TMPDIR=/tmp/$(whoami)/bootimg
     rm -rf $TMPDIR
     mkdir -p $TMPDIR
     cp $BOOTIMAGE $TMPDIR
@@ -114,9 +114,15 @@ fi
 
 mv $DEVICE_DIR/device.mk $DEVICE_DIR/device_$DEVICE.mk
 
+echo Creating initial git repository.
+pushd $DEVICE_DIR
+git init
+git add .
+git commit -a -m "mkvendor.sh: Initial commit of $DEVICE"
+popd
 
 echo Done!
 echo Use the following command to set up your build environment:
-echo '  'lunch full_$DEVICE-eng
+echo '  'lunch cm_$DEVICE-eng
 echo And use the follwowing command to build a recovery:
-echo '  '. build/tools/device/makerecoveries.sh full_$DEVICE-eng
+echo '  '. build/tools/device/makerecoveries.sh cm_$DEVICE-eng

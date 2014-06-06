@@ -16,7 +16,12 @@
 
 #
 # Functions for including AndroidProducts.mk files
-#
+# PRODUCT_MAKEFILES is set up in AndroidProducts.mks.
+# Format of PRODUCT_MAKEFILES:
+# <product_name>:<path_to_the_product_makefile>
+# If the <product_name> is the same as the base file name (without dir
+# and the .mk suffix) of the product makefile, "<product_name>:" can be
+# omitted.
 
 #
 # Returns the list of all AndroidProducts.mk files.
@@ -60,6 +65,7 @@ endef
 #
 
 _product_var_list := \
+    PRODUCT_BOOTANIMATION \
     PRODUCT_BUILD_PROP_OVERRIDES \
     PRODUCT_NAME \
     PRODUCT_MODEL \
@@ -67,6 +73,9 @@ _product_var_list := \
     PRODUCT_AAPT_CONFIG \
     PRODUCT_AAPT_PREF_CONFIG \
     PRODUCT_PACKAGES \
+    PRODUCT_PACKAGES_DEBUG \
+    PRODUCT_PACKAGES_ENG \
+    PRODUCT_PACKAGES_TESTS \
     PRODUCT_DEVICE \
     PRODUCT_MANUFACTURER \
     PRODUCT_BRAND \
@@ -74,6 +83,7 @@ _product_var_list := \
     PRODUCT_DEFAULT_PROPERTY_OVERRIDES \
     PRODUCT_CHARACTERISTICS \
     PRODUCT_COPY_FILES \
+    PRODUCT_COPY_FILES_OVERRIDES \
     PRODUCT_OTA_PUBLIC_KEYS \
     PRODUCT_EXTRA_RECOVERY_KEYS \
     PRODUCT_PACKAGE_OVERLAYS \
@@ -86,8 +96,11 @@ _product_var_list := \
     PRODUCT_DEFAULT_WIFI_CHANNELS \
     PRODUCT_DEFAULT_DEV_CERTIFICATE \
     PRODUCT_RESTRICT_VENDOR_FILES \
-    PRODUCT_FACTORY_RAMDISK_MODULES \
     PRODUCT_VENDOR_KERNEL_HEADERS \
+    PRODUCT_FACTORY_RAMDISK_MODULES \
+    PRODUCT_FACTORY_BUNDLE_MODULES \
+    PRODUCT_RUNTIMES \
+    PRODUCT_BOOT_JARS
 
 
 define dump-product
@@ -162,7 +175,7 @@ $(if ,, \
     $(eval pb := $(strip $(PRODUCTS.$(p).PRODUCT_BRAND))) \
     $(if $(pb),,$(error $(p): PRODUCT_BRAND must be defined.)) \
     $(foreach cf,$(strip $(PRODUCTS.$(p).PRODUCT_COPY_FILES)), \
-      $(if $(filter 2,$(words $(subst :,$(space),$(cf)))),, \
+      $(if $(filter 2 3,$(words $(subst :,$(space),$(cf)))),, \
         $(error $(p): malformed COPY_FILE "$(cf)") \
        ) \
      ) \
@@ -199,8 +212,10 @@ endef
 
 
 _product_stash_var_list := $(_product_var_list) \
+	PRODUCT_BOOTCLASSPATH \
 	TARGET_ARCH \
 	TARGET_ARCH_VARIANT \
+	TARGET_CPU_VARIANT \
 	TARGET_BOARD_PLATFORM \
 	TARGET_BOARD_PLATFORM_GPU \
 	TARGET_BOARD_KERNEL_HEADERS \
@@ -226,8 +241,6 @@ _product_stash_var_list += \
 	BOARD_KERNEL_CMDLINE \
 	BOARD_KERNEL_BASE \
 	BOARD_HAVE_BLUETOOTH \
-	BOARD_HAVE_BLUETOOTH_BCM \
-	BOARD_VENDOR_QCOM_AMSS_VERSION \
 	BOARD_VENDOR_USE_AKMD \
 	BOARD_EGL_CFG \
 	BOARD_BOOTIMAGE_PARTITION_SIZE \
@@ -238,8 +251,6 @@ _product_stash_var_list += \
 	BOARD_CACHEIMAGE_PARTITION_SIZE \
 	BOARD_FLASH_BLOCK_SIZE \
 	BOARD_SYSTEMIMAGE_PARTITION_SIZE \
-	BOARD_VENDOR_QCOM_GPS_LOC_API_HARDWARE \
-	BOARD_VENDOR_QCOM_GPS_LOC_API_AMSS_VERSION \
 	BOARD_INSTALLER_CMDLINE \
 
 

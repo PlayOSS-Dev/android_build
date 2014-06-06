@@ -13,6 +13,9 @@
 # limitations under the License.
 #
 
+# Don't bother with the cleanspecs if you are running mm/mmm
+ifeq ($(ONE_SHOT_MAKEFILE)$(dont_bother),)
+
 INTERNAL_CLEAN_STEPS :=
 
 # Builds up a list of clean steps.  Creates a unique
@@ -97,6 +100,7 @@ clean_steps_file :=
 INTERNAL_CLEAN_STEPS :=
 INTERNAL_CLEAN_BUILD_VERSION :=
 
+endif  # if not ONE_SHOT_MAKEFILE dont_bother
 
 # Since products and build variants (unfortunately) share the same
 # PRODUCT_OUT staging directory, things can get out of sync if different
@@ -178,6 +182,8 @@ installclean_files := \
 	$(PRODUCT_OUT)/*.txt \
 	$(PRODUCT_OUT)/*.xlb \
 	$(PRODUCT_OUT)/*.zip \
+	$(PRODUCT_OUT)/*.zip.md5sum \
+	$(PRODUCT_OUT)/kernel \
 	$(PRODUCT_OUT)/data \
 	$(PRODUCT_OUT)/obj/APPS \
 	$(PRODUCT_OUT)/obj/NOTICE_FILES \
@@ -187,7 +193,11 @@ installclean_files := \
 	$(PRODUCT_OUT)/system \
 	$(PRODUCT_OUT)/dex_bootjars \
 	$(PRODUCT_OUT)/obj/JAVA_LIBRARIES \
-	$(PRODUCT_OUT)/obj/FAKE
+	$(PRODUCT_OUT)/obj/FAKE \
+	$(PRODUCT_OUT)/obj/EXECUTABLES/adbd_intermediates \
+	$(PRODUCT_OUT)/obj/EXECUTABLES/init_intermediates \
+	$(PRODUCT_OUT)/obj/ETC/mac_permissions.xml_intermediates \
+	$(PRODUCT_OUT)/obj/ETC/sepolicy_intermediates
 
 # The files/dirs to delete during a dataclean, which removes any files
 # in the staging and emulator data partitions.
@@ -207,13 +217,13 @@ endif
 dataclean: FILES := $(dataclean_files)
 dataclean:
 	$(hide) rm -rf $(FILES)
-	@echo "Deleted emulator userdata images."
+	@echo -e ${CL_GRN}"Deleted emulator userdata images."${CL_RST}
 
 .PHONY: installclean
 installclean: FILES := $(installclean_files)
 installclean: dataclean
 	$(hide) rm -rf $(FILES)
-	@echo "Deleted images and staging directories."
+	@echo -e ${CL_GRN}"Deleted images and staging directories."${CL_RST}
 
 ifeq "$(force_installclean)" "true"
   $(info *** Forcing "make installclean"...)

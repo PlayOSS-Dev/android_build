@@ -14,13 +14,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
+import os, sys
 
 # Put the modifications that you need to make into the /system/build.prop into this
 # function. The prop object has get(name) and put(name,value) methods.
-def mangle_build_prop(prop):
-  pass
+def mangle_build_prop(prop, overrides):
+  if len(overrides) == 0:
+    return
+  overridelist = overrides.replace(" ",",").split(",")
+  for proppair in overridelist:
+    values = proppair.split("=")
+    prop.put(values[0], values[1])
 
+  pass
 
 # Put the modifications that you need to make into the /system/build.prop into this
 # function. The prop object has get(name) and put(name,value) methods.
@@ -34,7 +40,11 @@ def mangle_default_prop(prop):
     else:
       val = val + ",adb"
     prop.put("persist.sys.usb.config", val)
-
+  # UsbDeviceManager expects a value here.  If it doesn't get it, it will
+  # default to "adb". That might not the right policy there, but it's better
+  # to be explicit.
+  if not prop.get("persist.sys.usb.config"):
+    prop.put("persist.sys.usb.config", "none");
 
 class PropFile:
   def __init__(self, lines):
@@ -61,13 +71,17 @@ class PropFile:
 
 def main(argv):
   filename = argv[1]
+  if (len(argv) > 2):
+    extraargs = argv[2]
+  else:
+    extraargs = ""
   f = open(filename)
   lines = f.readlines()
   f.close()
 
   properties = PropFile(lines)
   if filename.endswith("/build.prop"):
-    mangle_build_prop(properties)
+    mangle_build_prop(properties, extraargs)
   elif filename.endswith("/default.prop"):
     mangle_default_prop(properties)
   else:
